@@ -147,6 +147,33 @@ fex_LSHO = x_axis_LSHO/norm(x_axis_LSHO);
 fey_LSHO = y_axis_LSHO/norm(y_axis_LSHO);
 fez_LSHO = z_axis_LSHO/norm(z_axis_LSHO);
 
+%% Right Hand Coordinate System
+
+O_RMANUS(:,:) = Markers.RFIN(:,:);
+y_axis_tmp_RMANUS = (0.5*(Markers.RWRA(:,:) + Markers.RWRB(:,:))) - O_RMANUS(:,:);
+z_axis_tmp_RMANUS = Markers.RWRA(:,:) - Markers.RWRB(:,:);
+x_axis_RMANUS = cross(y_axis_tmp_RMANUS(:,:), z_axis_tmp_RMANUS(:,:));
+z_axis_RMANUS = cross(x_axis_RMANUS(:,:), y_axis_tmp_RMANUS(:,:));
+y_axis_RMANUS = cross(z_axis_RMANUS(:,:),x_axis_RMANUS(:,:));
+
+fex_RMANUS = x_axis_RMANUS/norm(x_axis_RMANUS);
+fey_RMANUS = y_axis_RMANUS/norm(y_axis_RMANUS);
+fez_RMANUS = z_axis_RMANUS/norm(z_axis_RMANUS);
+
+%% Left Hand Coordinate System
+
+O_LMANUS(:,:) = Markers.LFIN(:,:);
+y_axis_tmp_LMANUS = (0.5*(Markers.LWRA(:,:) + Markers.LWRB(:,:))) - O_LMANUS(:,:);
+z_axis_tmp_LMANUS = Markers.LWRA(:,:) - Markers.LWRB(:,:);
+x_axis_LMANUS = cross(y_axis_tmp_LMANUS(:,:), z_axis_tmp_LMANUS(:,:));
+z_axis_LMANUS = cross(x_axis_LMANUS(:,:), y_axis_tmp_LMANUS(:,:));
+y_axis_LMANUS = cross(z_axis_LMANUS(:,:),x_axis_LMANUS(:,:));
+
+fex_LMANUS = x_axis_LMANUS/norm(x_axis_LMANUS);
+fey_LMANUS = y_axis_LMANUS/norm(y_axis_LMANUS);
+fez_LMANUS = z_axis_LMANUS/norm(z_axis_LMANUS);
+
+
 %% plots LCS
 
 % upper spine
@@ -163,7 +190,7 @@ plot3([O_US(1,1),O_US(1,1)+fey_US(1,1)*1000],...
 plot3([O_US(1,1),O_US(1,1)+fez_US(1,1)*1000],...
      [O_US(1,2),O_US(1,2)+fez_US(1,2)*1000],...
      [O_US(1,3),O_US(1,3)+fez_US(1,3)*1000],'g');
-
+ 
 % lower spine
 
 plot3([O_LS(1,1),O_LS(1,1)+fex_LS(1,1)*1000],...
@@ -231,6 +258,33 @@ plot3([O_LSHO(1,1),O_LSHO(1,1)+fez_LSHO(1,1)*1000],...
      [O_LSHO(1,2),O_LSHO(1,2)+fez_LSHO(1,2)*1000],...
      [O_LSHO(1,3),O_LSHO(1,3)+fez_LSHO(1,3)*1000],'g');
  
+% right hand
+
+plot3([O_RMANUS(1,1),O_RMANUS(1,1)+fex_RMANUS(1,1)*1000],...
+     [O_RMANUS(1,2),O_RMANUS(1,2)+fex_RMANUS(1,2)*1000],...
+     [O_RMANUS(1,3),O_RMANUS(1,3)+fex_RMANUS(1,3)*1000],'r');
+
+plot3([O_RMANUS(1,1),O_RMANUS(1,1)+fey_RMANUS(1,1)*1000],...
+     [O_RMANUS(1,2),O_RMANUS(1,2)+fey_RMANUS(1,2)*1000],...
+     [O_RMANUS(1,3),O_RMANUS(1,3)+fey_RMANUS(1,3)*1000],'b');
+ 
+plot3([O_RMANUS(1,1),O_RMANUS(1,1)+fez_RMANUS(1,1)*1000],...
+     [O_RMANUS(1,2),O_RMANUS(1,2)+fez_RMANUS(1,2)*1000],...
+     [O_RMANUS(1,3),O_RMANUS(1,3)+fez_RMANUS(1,3)*1000],'g');
+ 
+ % Left hand
+
+plot3([O_LMANUS(1,1),O_LMANUS(1,1)+fex_LMANUS(1,1)*1000],...
+     [O_LMANUS(1,2),O_LMANUS(1,2)+fex_LMANUS(1,2)*1000],...
+     [O_LMANUS(1,3),O_LMANUS(1,3)+fex_LMANUS(1,3)*1000],'r');
+
+plot3([O_LMANUS(1,1),O_LMANUS(1,1)+fey_LMANUS(1,1)*1000],...
+     [O_LMANUS(1,2),O_LMANUS(1,2)+fey_LMANUS(1,2)*1000],...
+     [O_LMANUS(1,3),O_LMANUS(1,3)+fey_LMANUS(1,3)*1000],'b');
+ 
+plot3([O_LMANUS(1,1),O_LMANUS(1,1)+fez_LMANUS(1,1)*1000],...
+     [O_LMANUS(1,2),O_LMANUS(1,2)+fez_LMANUS(1,2)*1000],...
+     [O_LMANUS(1,3),O_LMANUS(1,3)+fez_LMANUS(1,3)*1000],'g');
  
 %% Plot markers
 plot3(Markers.RPSI(1,1),Markers.RPSI(1,2),Markers.RPSI(1,3),'o');
@@ -281,6 +335,9 @@ plot3(Markers.LSHO(1,1),Markers.LSHO(1,2),Markers.LSHO(1,3),'o');
 plot3(Markers.RACR(1,1),Markers.RACR(1,2),Markers.RACR(1,3),'o');
 plot3(Markers.LACR(1,1),Markers.LACR(1,2),Markers.LACR(1,3),'o');
 
+plot3(Markers.RFIN(1,1),Markers.RFIN(1,2),Markers.RFIN(1,3),'o');
+plot3(Markers.LFIN(1,1),Markers.LFIN(1,2),Markers.LFIN(1,3),'o');
+
 plot3([O_US(1,1),O_LS(1,1)],[O_US(1,2),O_LS(1,2)],[O_US(1,3),O_LS(1,3)],'--k');
 
 %% Plot joint centers
@@ -291,3 +348,5 @@ plot3(O_RSHO(1,1),O_RSHO(1,2),O_RSHO(1,3),'+k');
 
 axis equal
 grid on
+legend('x','y','z');
+
