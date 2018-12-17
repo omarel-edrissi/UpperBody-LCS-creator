@@ -114,6 +114,39 @@ y_axis_LFA(:,:) = cross(z_axis_LFA(:,:),x_axis_LFA(:,:));
 fex_LFA = x_axis_LFA/norm(x_axis_LFA);
 fey_LFA = y_axis_LFA/norm(y_axis_LFA);
 fez_LFA = z_axis_LFA/norm(z_axis_LFA);
+%% Thorax Coordinate System
+
+O_T(:,:) = (Markers.CLAV(:,:));
+Markers.TH8calc(:,:) = (0.5 * (Markers.TH6(:,:) + Markers.TH10(:,:)));
+Markers.TH8STRNMidcalc(:,:) = (0.5 * (Markers.TH8calc(:,:) + Markers.STRN(:,:)));
+Markers.C7CLAVMidcalc(:,:) = (0.5 * (Markers.C7(:,:) + Markers.CLAV(:,:)));
+y_axis_tmp_T(:,:) = (Markers.C7CLAVMidcalc(:,:) - Markers.TH8STRNMidcalc(:,:));
+z_axis_tmp_T(:,:) = cross((O_T(:,:) - Markers.C7CLAVMidcalc(:,:)),...
+                          (O_T(:,:) - Markers.TH8STRNMidcalc(:,:)));
+
+x_axis_T(:,:) = cross(y_axis_tmp_T(:,:),z_axis_tmp_T(:,:));
+z_axis_T(:,:) = cross(x_axis_T(:,:), y_axis_tmp_T(:,:));
+y_axis_T(:,:) = cross(z_axis_T(:,:),x_axis_T(:,:));
+
+fex_T = x_axis_T/norm(x_axis_T);
+fey_T = y_axis_T/norm(y_axis_T);
+fez_T = z_axis_T/norm(z_axis_T);
+
+%% Right Clavicula Coordinate System
+
+O_RCLAV(:,:) = (Markers.CLAV(:,:));
+%u3 = z-axis = ISB recommendations: The line connecting SC and AC, pointing to AC
+z_axis_tmp_RCLAV(:,:) = (Markers.RACR(:,:) - O_RCLAV(:,:));
+
+%u2 = x-axis = ISB recommendations: The line perpendicular to Zc and Yt, pointing
+%forward. Note that the Xc-axis is defined with respect to the vertical axis of the thorax (Ytaxis)
+%because only two bonylandmarks can be discerned at the clavicle.
+
+%u1 = y-axis = ISB recommendations: The common line perpendicular to the Xc- and Zc-axis, pointing upward.
+
+
+%% Left Clavicula Coordinate System
+
 
 %% Right Shoulder Coordinate System
 % mediolateral axis ISB x C3D y
@@ -204,6 +237,20 @@ plot3([O_LS(1,1),O_LS(1,1)+fey_LS(1,1)*1000],...
 plot3([O_LS(1,1),O_LS(1,1)+fez_LS(1,1)*1000],...
      [O_LS(1,2),O_LS(1,2)+fez_LS(1,2)*1000],...
      [O_LS(1,3),O_LS(1,3)+fez_LS(1,3)*1000],'g');
+ 
+% thorax
+
+plot3([O_T(1,1),O_T(1,1)+fex_T(1,1)*1000],...
+     [O_T(1,2),O_T(1,2)+fex_T(1,2)*1000],...
+     [O_T(1,3),O_T(1,3)+fex_T(1,3)*1000],'r');
+
+plot3([O_T(1,1),O_T(1,1)+fey_T(1,1)*1000],...
+     [O_T(1,2),O_T(1,2)+fey_T(1,2)*1000],...
+     [O_T(1,3),O_T(1,3)+fey_T(1,3)*1000],'b');
+ 
+plot3([O_T(1,1),O_T(1,1)+fez_T(1,1)*1000],...
+     [O_T(1,2),O_T(1,2)+fez_T(1,2)*1000],...
+     [O_T(1,3),O_T(1,3)+fez_T(1,3)*1000],'g');
 
 % forearm
 plot3([O_RFA(1,1),O_RFA(1,1)+fex_RFA(1,1)*1000],...
@@ -293,7 +340,13 @@ plot3(Markers.L1(1,1),Markers.L1(1,2),Markers.L1(1,3),'o');
 
 plot3(Markers.C7(1,1),Markers.C7(1,2),Markers.C7(1,3),'o');
 plot3(Markers.CLAV(1,1),Markers.CLAV(1,2),Markers.CLAV(1,3),'o');
+plot3(Markers.STRN(1,1),Markers.STRN(1,2),Markers.STRN(1,3),'o');
+plot3(Markers.TH6(1,1),Markers.TH6(1,2),Markers.TH6(1,3),'o');
+plot3(Markers.TH8calc(1,1),Markers.TH8calc(1,2),Markers.TH8calc(1,3),'+k');
 plot3(Markers.TH10(1,1),Markers.TH10(1,2),Markers.TH10(1,3),'o');
+
+plot3(Markers.TH8STRNMidcalc(1,1),Markers.TH8STRNMidcalc(1,2),Markers.TH8STRNMidcalc(1,3),'+k');
+plot3(Markers.C7CLAVMidcalc(1,1),Markers.C7CLAVMidcalc(1,2),Markers.C7CLAVMidcalc(1,3),'+k');
 
 plot3(Markers.RANK(1,1),Markers.RANK(1,2),Markers.RANK(1,3),'o');
 plot3(Markers.RANKmed(1,1),Markers.RANKmed(1,2),Markers.RANKmed(1,3),'o');
@@ -338,7 +391,11 @@ plot3(Markers.LACR(1,1),Markers.LACR(1,2),Markers.LACR(1,3),'o');
 plot3(Markers.RFIN(1,1),Markers.RFIN(1,2),Markers.RFIN(1,3),'o');
 plot3(Markers.LFIN(1,1),Markers.LFIN(1,2),Markers.LFIN(1,3),'o');
 
-plot3([O_US(1,1),O_LS(1,1)],[O_US(1,2),O_LS(1,2)],[O_US(1,3),O_LS(1,3)],'--k');
+%plot3([O_US(1,1),O_LS(1,1)],[O_US(1,2),O_LS(1,2)],[O_US(1,3),O_LS(1,3)],'--k');
+%plot3([O_T(1,1),Markers.C7(1,1)],[O_T(1,2),Markers.C7(1,2)],[O_T(1,3),Markers.C7(1,3)],'--k');
+%plot3([O_T(1,1),Markers.TH8STRNMidcalc(1,1)],[O_T(1,2),Markers.TH8STRNMidcalc(1,2)],[O_T(1,3),Markers.TH8STRNMidcalc(1,3)],'--k');
+%plot3([Markers.C7(1,1),Markers.TH8STRNMidcalc(1,1)],[Markers.C7(1,2),Markers.TH8STRNMidcalc(1,2)],[Markers.C7(1,3),Markers.TH8STRNMidcalc(1,3)],'--k');
+
 
 %% Plot joint centers
 
