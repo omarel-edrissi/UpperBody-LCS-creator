@@ -28,6 +28,10 @@ filepath = 'C:\Users\omar\Aamu M. Sc. TSM\Sciebo\Sina\Data\c3d\Handball\23_Ref_0
 
 clearvars filename path;
 
+%% Model definiton
+
+USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION = true;
+
 
 %% Lower spine coordinate system
 
@@ -134,19 +138,69 @@ fez_T = z_axis_T/norm(z_axis_T);
 
 %% Right Clavicula Coordinate System
 
-O_RCLAV(:,:) = (Markers.CLAV(:,:));
+% Calculation of the Sternoclavicular (SC) joint center from the Incisura
+% jugularis (IJ) based on the values for a 57 year old right muscular male
+% shoulder with an estimated body length of 168 cm provided by 
+% Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
+% right values were mirrored to the left
+if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
+    O_RCLAV(:,1) = (Markers.CLAV(:,1)-24.5);
+    O_RCLAV(:,2) = (Markers.CLAV(:,2)-22.5);
+    O_RCLAV(:,3) = (Markers.CLAV(:,3)-8);
+else
+    O_RCLAV(:,:) = (Markers.CLAV(:,:));
+end
+
+
 %u3 = z-axis = ISB recommendations: The line connecting SC and AC, pointing to AC
 z_axis_tmp_RCLAV(:,:) = (Markers.RACR(:,:) - O_RCLAV(:,:));
 
 %u2 = x-axis = ISB recommendations: The line perpendicular to Zc and Yt, pointing
 %forward. Note that the Xc-axis is defined with respect to the vertical axis of the thorax (Ytaxis)
 %because only two bonylandmarks can be discerned at the clavicle.
+x_axis_tmp_RCLAV(:,:) = cross(y_axis_T(:,:),z_axis_tmp_RCLAV(:,:));
 
 %u1 = y-axis = ISB recommendations: The common line perpendicular to the Xc- and Zc-axis, pointing upward.
+y_axis_RCLAV(:,:) = cross(z_axis_tmp_RCLAV(:,:),x_axis_tmp_RCLAV(:,:));
+x_axis_RCLAV(:,:) = cross(y_axis_RCLAV(:,:),z_axis_tmp_RCLAV(:,:));
+z_axis_RCLAV(:,:) = cross(x_axis_RCLAV(:,:), y_axis_RCLAV(:,:));
 
+fex_RCLAV = x_axis_RCLAV/norm(x_axis_RCLAV);
+fey_RCLAV = y_axis_RCLAV/norm(y_axis_RCLAV);
+fez_RCLAV = z_axis_RCLAV/norm(z_axis_RCLAV);
 
 %% Left Clavicula Coordinate System
 
+% Calculation of the Sternoclavicular (SC) joint center from the Incisura
+% jugularis (IJ) based on the values for a 57 year old right muscular male
+% shoulder with an estimated body length of 168 cm provided by 
+% Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
+% right values were mirrored to the left
+if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
+    O_LCLAV(:,1) = (Markers.CLAV(:,1)- 24.5);
+    O_LCLAV(:,2) = (Markers.CLAV(:,2)+ 22.5);
+    O_LCLAV(:,3) = (Markers.CLAV(:,3)- 8);
+else
+    O_LCLAV(:,:) = (Markers.CLAV(:,:));
+end
+
+%u3 = z-axis = ISB recommendations: The line connecting SC and AC, pointing to AC
+z_axis_tmp_LCLAV(:,:) = (Markers.LACR(:,:) - O_LCLAV(:,:));
+
+%u2 = x-axis = ISB recommendations: The line perpendicular to Zc and Yt, pointing
+%forward. Note that the Xc-axis is defined with respect to the vertical axis of the thorax (Ytaxis)
+%because only two bonylandmarks can be discerned at the clavicle.
+x_axis_tmp_LCLAV(:,:) = cross(y_axis_T(:,:),z_axis_tmp_LCLAV(:,:));
+
+%u1 = y-axis = ISB recommendations: The common line perpendicular to the Xc- and Zc-axis, pointing upward.
+y_axis_tmp_LCLAV(:,:) = cross(z_axis_tmp_LCLAV(:,:),x_axis_tmp_LCLAV(:,:));
+x_axis_LCLAV(:,:) = cross(y_axis_tmp_LCLAV(:,:),z_axis_tmp_LCLAV(:,:));
+z_axis_LCLAV(:,:) = cross(x_axis_LCLAV(:,:), y_axis_tmp_LCLAV(:,:));
+y_axis_LCLAV(:,:) = cross(z_axis_LCLAV(:,:),x_axis_LCLAV(:,:));
+
+fex_LCLAV = x_axis_LCLAV/norm(x_axis_LCLAV);
+fey_LCLAV = y_axis_LCLAV/norm(y_axis_LCLAV);
+fez_LCLAV = z_axis_LCLAV/norm(z_axis_LCLAV);
 
 %% Right Shoulder Coordinate System
 % mediolateral axis ISB x C3D y
@@ -208,6 +262,8 @@ fez_LMANUS = z_axis_LMANUS/norm(z_axis_LMANUS);
 
 
 %% plots LCS
+
+figure
 
 % upper spine
 plot3([O_US(1,1),O_US(1,1)+fex_US(1,1)*1000],...
@@ -333,27 +389,60 @@ plot3([O_LMANUS(1,1),O_LMANUS(1,1)+fez_LMANUS(1,1)*1000],...
      [O_LMANUS(1,2),O_LMANUS(1,2)+fez_LMANUS(1,2)*1000],...
      [O_LMANUS(1,3),O_LMANUS(1,3)+fez_LMANUS(1,3)*1000],'g');
  
+ % right clavicle
+ 
+ plot3([O_RCLAV(1,1),O_RCLAV(1,1)+fex_RCLAV(1,1)*1000],...
+     [O_RCLAV(1,2),O_RCLAV(1,2)+fex_RCLAV(1,2)*1000],...
+     [O_RCLAV(1,3),O_RCLAV(1,3)+fex_RCLAV(1,3)*1000],'r');
+
+plot3([O_RCLAV(1,1),O_RCLAV(1,1)+fey_RCLAV(1,1)*1000],...
+     [O_RCLAV(1,2),O_RCLAV(1,2)+fey_RCLAV(1,2)*1000],...
+     [O_RCLAV(1,3),O_RCLAV(1,3)+fey_RCLAV(1,3)*1000],'b');
+ 
+plot3([O_RCLAV(1,1),O_RCLAV(1,1)+fez_RCLAV(1,1)*1000],...
+     [O_RCLAV(1,2),O_RCLAV(1,2)+fez_RCLAV(1,2)*1000],...
+     [O_RCLAV(1,3),O_RCLAV(1,3)+fez_RCLAV(1,3)*1000],'g');
+ 
+ %left clacivle
+ 
+plot3([O_LCLAV(1,1),O_LCLAV(1,1)+fex_LCLAV(1,1)*1000],...
+     [O_LCLAV(1,2),O_LCLAV(1,2)+fex_LCLAV(1,2)*1000],...
+     [O_LCLAV(1,3),O_LCLAV(1,3)+fex_LCLAV(1,3)*1000],'r');
+
+plot3([O_LCLAV(1,1),O_LCLAV(1,1)+fey_LCLAV(1,1)*1000],...
+     [O_LCLAV(1,2),O_LCLAV(1,2)+fey_LCLAV(1,2)*1000],...
+     [O_LCLAV(1,3),O_LCLAV(1,3)+fey_LCLAV(1,3)*1000],'b');
+ 
+plot3([O_LCLAV(1,1),O_LCLAV(1,1)+fez_LCLAV(1,1)*1000],...
+     [O_LCLAV(1,2),O_LCLAV(1,2)+fez_LCLAV(1,2)*1000],...
+     [O_LCLAV(1,3),O_LCLAV(1,3)+fez_LCLAV(1,3)*1000],'g');
+ 
 %% Plot markers
 plot3(Markers.RPSI(1,1),Markers.RPSI(1,2),Markers.RPSI(1,3),'o');
 plot3(Markers.LPSI(1,1),Markers.LPSI(1,2),Markers.LPSI(1,3),'o');
+plot3(Markers.RASI(1,1),Markers.RASI(1,2),Markers.RASI(1,3),'o');
+plot3(Markers.LASI(1,1),Markers.LASI(1,2),Markers.LASI(1,3),'o');
 plot3(Markers.L1(1,1),Markers.L1(1,2),Markers.L1(1,3),'o');
 
 plot3(Markers.C7(1,1),Markers.C7(1,2),Markers.C7(1,3),'o');
 plot3(Markers.CLAV(1,1),Markers.CLAV(1,2),Markers.CLAV(1,3),'o');
 plot3(Markers.STRN(1,1),Markers.STRN(1,2),Markers.STRN(1,3),'o');
 plot3(Markers.TH6(1,1),Markers.TH6(1,2),Markers.TH6(1,3),'o');
-plot3(Markers.TH8calc(1,1),Markers.TH8calc(1,2),Markers.TH8calc(1,3),'+k');
 plot3(Markers.TH10(1,1),Markers.TH10(1,2),Markers.TH10(1,3),'o');
-
-plot3(Markers.TH8STRNMidcalc(1,1),Markers.TH8STRNMidcalc(1,2),Markers.TH8STRNMidcalc(1,3),'+k');
-plot3(Markers.C7CLAVMidcalc(1,1),Markers.C7CLAVMidcalc(1,2),Markers.C7CLAVMidcalc(1,3),'+k');
 
 plot3(Markers.RANK(1,1),Markers.RANK(1,2),Markers.RANK(1,3),'o');
 plot3(Markers.RANKmed(1,1),Markers.RANKmed(1,2),Markers.RANKmed(1,3),'o');
 
+plot3(Markers.LANK(1,1),Markers.LANK(1,2),Markers.LANK(1,3),'o');
+plot3(Markers.LANKmed(1,1),Markers.LANKmed(1,2),Markers.LANKmed(1,3),'o');
+
 plot3(Markers.RKNE(1,1),Markers.RKNE(1,2),Markers.RKNE(1,3),'o');
 plot3(Markers.RKNEmed(1,1),Markers.RKNEmed(1,2),Markers.RKNEmed(1,3),'o');
 plot3(Markers.RTRO(1,1),Markers.RTRO(1,2),Markers.RTRO(1,3),'o');
+
+plot3(Markers.LKNE(1,1),Markers.LKNE(1,2),Markers.LKNE(1,3),'o');
+plot3(Markers.LKNEmed(1,1),Markers.LKNEmed(1,2),Markers.LKNEmed(1,3),'o');
+plot3(Markers.LTRO(1,1),Markers.LTRO(1,2),Markers.LTRO(1,3),'o');
 
 plot3(Markers.RFH(1,1),Markers.RFH(1,2),Markers.RFH(1,3),'o');
 plot3(Markers.LFH(1,1),Markers.LFH(1,2),Markers.LFH(1,3),'o');
@@ -397,10 +486,17 @@ plot3(Markers.LFIN(1,1),Markers.LFIN(1,2),Markers.LFIN(1,3),'o');
 %plot3([Markers.C7(1,1),Markers.TH8STRNMidcalc(1,1)],[Markers.C7(1,2),Markers.TH8STRNMidcalc(1,2)],[Markers.C7(1,3),Markers.TH8STRNMidcalc(1,3)],'--k');
 
 
-%% Plot joint centers
+%% Plot calculated joint centers and calculated markers
 
 plot3(O_LSHO(1,1),O_LSHO(1,2),O_LSHO(1,3),'+k');
 plot3(O_RSHO(1,1),O_RSHO(1,2),O_RSHO(1,3),'+k');
+
+plot3(O_RCLAV(1,1),O_RCLAV(1,2),O_RCLAV(1,3),'+k');
+plot3(O_LCLAV(1,1),O_LCLAV(1,2),O_LCLAV(1,3),'+k');
+
+plot3(Markers.TH8STRNMidcalc(1,1),Markers.TH8STRNMidcalc(1,2),Markers.TH8STRNMidcalc(1,3),'ok');
+plot3(Markers.C7CLAVMidcalc(1,1),Markers.C7CLAVMidcalc(1,2),Markers.C7CLAVMidcalc(1,3),'ok');
+plot3(Markers.TH8calc(1,1),Markers.TH8calc(1,2),Markers.TH8calc(1,3),'ok');
 
 
 axis equal
