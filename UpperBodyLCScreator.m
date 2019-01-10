@@ -28,8 +28,13 @@ filepath = 'C:\Users\omar\Aamu M. Sc. TSM\Sciebo\Sina\Data\c3d\Handball\23_Ref_0
 
 clearvars filename path;
 
-%% Model definiton
+%% Definitions
 
+% Calculation of the Sternoclavicular (SC) joint center from the Incisura
+% jugularis (IJ) based on the values for a 57 year old right muscular male
+% shoulder with an estimated body length of 168 cm provided by 
+% Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
+% right values were mirrored to the left
 USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION = true;
 
 
@@ -142,7 +147,6 @@ fez_T = z_axis_T/norm(z_axis_T);
 % jugularis (IJ) based on the values for a 57 year old right muscular male
 % shoulder with an estimated body length of 168 cm provided by 
 % Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
-% right values were mirrored to the left
 if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
     O_RCLAV(:,1) = (Markers.CLAV(:,1)-24.5);
     O_RCLAV(:,2) = (Markers.CLAV(:,2)-22.5);
@@ -175,7 +179,8 @@ fez_RCLAV = z_axis_RCLAV/norm(z_axis_RCLAV);
 % jugularis (IJ) based on the values for a 57 year old right muscular male
 % shoulder with an estimated body length of 168 cm provided by 
 % Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
-% right values were mirrored to the left
+% right values were mirrored to the left by changing the sign of the 
+% medio lateral axis
 if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
     O_LCLAV(:,1) = (Markers.CLAV(:,1)- 24.5);
     O_LCLAV(:,2) = (Markers.CLAV(:,2)+ 22.5);
