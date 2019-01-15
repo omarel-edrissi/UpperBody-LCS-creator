@@ -37,6 +37,12 @@ clearvars filename path;
 % right values were mirrored to the left
 USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION = true;
 
+% Estimation of the Glenohumeral (GH) joint center from the Incisura jugularis (IJ) 
+% based on the values for a 57 year old right muscular male shoulder with an estimated 
+% body length of 168 cm provided by Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
+% right values were mirrored to the left by changing the sign of the medio lateral axis
+USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION = false;
+
 
 %% Lower spine coordinate system
 
@@ -148,9 +154,9 @@ fez_T = z_axis_T/norm(z_axis_T);
 % shoulder with an estimated body length of 168 cm provided by 
 % Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
 if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
-    O_RCLAV(:,1) = (Markers.CLAV(:,1)-24.5);
-    O_RCLAV(:,2) = (Markers.CLAV(:,2)-22.5);
-    O_RCLAV(:,3) = (Markers.CLAV(:,3)-8);
+    O_RCLAV(:,1) = (Markers.CLAV(:,1)-2.45*10);
+    O_RCLAV(:,2) = (Markers.CLAV(:,2)-2.25*10);
+    O_RCLAV(:,3) = (Markers.CLAV(:,3)-0.8*10);
 else
     O_RCLAV(:,:) = (Markers.CLAV(:,:));
 end
@@ -182,9 +188,9 @@ fez_RCLAV = z_axis_RCLAV/norm(z_axis_RCLAV);
 % right values were mirrored to the left by changing the sign of the 
 % medio lateral axis
 if USE_KLEIN_BRETELER_SC_JOINT_CENTER_ESTIMATION == true
-    O_LCLAV(:,1) = (Markers.CLAV(:,1)- 24.5);
-    O_LCLAV(:,2) = (Markers.CLAV(:,2)+ 22.5);
-    O_LCLAV(:,3) = (Markers.CLAV(:,3)- 8);
+    O_LCLAV(:,1) = (Markers.CLAV(:,1)- 2.45*10);
+    O_LCLAV(:,2) = (Markers.CLAV(:,2)+ 2.25*10);
+    O_LCLAV(:,3) = (Markers.CLAV(:,3)- 0.8*10);
 else
     O_LCLAV(:,:) = (Markers.CLAV(:,:));
 end
@@ -208,10 +214,17 @@ fey_LCLAV = y_axis_LCLAV/norm(y_axis_LCLAV);
 fez_LCLAV = z_axis_LCLAV/norm(z_axis_LCLAV);
 
 %% Right Shoulder Coordinate System
-% mediolateral axis ISB x C3D y
-O_RSHO(:,2) = Markers.RACR(:,2);
-O_RSHO(:,3) = Markers.RSHO(:,3);
-O_RSHO(:,1) = (Markers.RACR(:,1) + Markers.RSHO(:,1))/2;
+
+if USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION == true
+    O_RSHO(:,1) = (Markers.CLAV(:,1)-8.11*10);
+    O_RSHO(:,2) = (Markers.CLAV(:,2)-16.37*10);
+    O_RSHO(:,3) = (Markers.CLAV(:,3)-1.79*10);
+else
+    % mediolateral axis ISB x C3D y
+    O_RSHO(:,2) = Markers.RACR(:,2);
+    O_RSHO(:,3) = Markers.RSHO(:,3);
+    O_RSHO(:,1) = (Markers.RACR(:,1) + Markers.RSHO(:,1))/2;
+end
 
 y_axis_tmp_RSHO(:,:) = (O_RSHO(:,:)- y_axis_tmp_RFA(:,:));
 z_axis_tmp_RSHO(:,:) = cross(y_axis_tmp_RSHO(:,:),y_axis_RFA);
@@ -224,10 +237,17 @@ fey_RSHO = y_axis_RSHO/norm(y_axis_RSHO);
 fez_RSHO = z_axis_RSHO/norm(z_axis_RSHO);
 
 %% Left Shoulder Coordinate System
-% mediolateral axis ISB x C3D y
-O_LSHO(:,2) = Markers.LACR(:,2);
-O_LSHO(:,3) = Markers.LSHO(:,3);
-O_LSHO(:,1) = (Markers.LACR(:,1) + Markers.LSHO(:,1))/2;
+
+if USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION == true
+    O_LSHO(:,1) = (Markers.CLAV(:,1)-8.11*10);
+    O_LSHO(:,2) = (Markers.CLAV(:,2)+16.37*10);
+    O_LSHO(:,3) = (Markers.CLAV(:,3)-1.79*10);
+else
+    % mediolateral axis ISB x C3D y
+    O_LSHO(:,2) = Markers.LACR(:,2);
+    O_LSHO(:,3) = Markers.LSHO(:,3);
+    O_LSHO(:,1) = (Markers.LACR(:,1) + Markers.LSHO(:,1))/2;
+end
 
 y_axis_tmp_LSHO(:,:) = (O_LSHO(:,:)- y_axis_tmp_LFA(:,:));
 z_axis_tmp_LSHO(:,:) = cross(y_axis_tmp_LSHO(:,:),y_axis_LFA);
