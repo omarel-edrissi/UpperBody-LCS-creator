@@ -4,11 +4,12 @@
      close all
      clc
      clear
-     selectedFileImport = false;
+     preselectedFileImport = true;
+     loaddirectlyFromMat = true;
 
 %% Fileimport
 
-     if selectedFileImport == true
+     if preselectedFileImport == false
           [filename, path] = uigetfile('*.c3d', 'Select the .c3d file',...
           'MultiSelect', 'off');
       
@@ -16,18 +17,19 @@
           if filename ~= 0
                filepath = cat(2,path,filename);
           end
-     else   
-          filepath = 'C:\Users\omar\Aamu projects\Git\FullBody-RBF-scaling\Input\23_Ref_02_trim.c3d';
+     elseif loaddirectlyFromMat == true
+         load '.\Input\Ref_sup0004_mod.mat'
      end
-
-     tempC3dAcq = btkReadAcquisition(filepath);
-     Markers = btkGetMarkers(tempC3dAcq);
-     Angles = btkGetAngles(tempC3dAcq);
-     Forces = btkGetForces(tempC3dAcq);
-     Moments = btkGetMoments(tempC3dAcq);
-     Powers = btkGetPowers(tempC3dAcq);
-     
-     clearvars filepath tempC3dAcq;
+     if loaddirectlyFromMat == false
+        filepath = '.\Input\Ref_sup0004_mod.c3d';
+        tempC3dAcq = btkReadAcquisition(filepath);
+        Markers = btkGetMarkers(tempC3dAcq);
+        Angles = btkGetAngles(tempC3dAcq);
+        Forces = btkGetForces(tempC3dAcq);
+        Moments = btkGetMoments(tempC3dAcq);
+        Powers = btkGetPowers(tempC3dAcq);
+        clearvars filepath tempC3dAcq;   
+     end
 
      clearvars filename selectedFileImport path;
 
@@ -44,7 +46,11 @@
      % based on the values for a 57 year old right muscular male shoulder with an estimated 
      % body length of 168 cm provided by Klein Breteler, M. D., Spoor, C. W., & van der Helm, F. C.T. (1999)
      % right values were mirrored to the left by changing the sign of the medio lateral axis
-     USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION = true;
+     USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION = false;
+     
+     USE_MESKERS_GH_JOINT_CENTER_ESTIMATION = true;
+     
+     DEBUGMODE = true;
 
 %% Lower spine coordinate system
 
@@ -72,7 +78,7 @@
      O_US(:,:) = (Markers.C7(:,:));
 
      %cranial axis y
-     y_axis_tmp_US (:,:) = O_US(:,:) - Markers.TH10(:,:);
+     y_axis_tmp_US (:,:) = O_US(:,:) - Markers.T10(:,:);
 
      % %anterior posterior axis x
      x_axis_tmp_US(:,:) = (Markers.CLAV(:,:) - O_US(:,:));
@@ -136,7 +142,7 @@
 %% Thorax Coordinate System
 
      O_T(:,:) = (Markers.CLAV(:,:));
-     Markers.TH8calc(:,:) = (0.5 * (Markers.TH6(:,:) + Markers.TH10(:,:)));
+     Markers.TH8calc(:,:) = (0.5 * (Markers.T6(:,:) + Markers.T10(:,:)));
      Markers.TH8STRNMidcalc(:,:) = (0.5 * (Markers.TH8calc(:,:) + Markers.STRN(:,:)));
      Markers.C7CLAVMidcalc(:,:) = (0.5 * (Markers.C7(:,:) + Markers.CLAV(:,:)));
      y_axis_tmp_T(:,:) = (Markers.C7CLAVMidcalc(:,:) - Markers.TH8STRNMidcalc(:,:));
@@ -153,25 +159,6 @@
 
 %% Right Scapula Coordinate System
 
-     Markers.RAC(:,1) = (Markers.CLAV(:,1)-95.4);
-     Markers.RAC(:,2) = (Markers.CLAV(:,2)-165.3);
-     Markers.RAC(:,3) = (Markers.CLAV(:,3)+58.2);
-
-     Markers.RAA(:,1) = (Markers.CLAV(:,1)-86.6);
-     Markers.RAA(:,2) = (Markers.CLAV(:,2)-192.3);
-     Markers.RAA(:,3) = (Markers.CLAV(:,3)+50.9);
-
-     Markers.RTS(:,1) = (Markers.CLAV(:,1)-163.3);
-     Markers.RTS(:,2) = (Markers.CLAV(:,2)-86.8);
-     Markers.RTS(:,3) = (Markers.CLAV(:,3)+0.1);
-
-     Markers.RAI(:,1) = (Markers.CLAV(:,1)-159.9);
-     Markers.RAI(:,2) = (Markers.CLAV(:,2)-119.0);
-     Markers.RAI(:,3) = (Markers.CLAV(:,3)-108.5);
-
-     Markers.RGH(:,1) = (Markers.CLAV(:,1)-61.6);
-     Markers.RGH(:,2) = (Markers.CLAV(:,2)-183.2);
-     Markers.RGH(:,3) = (Markers.CLAV(:,3)+13.8);
 
      % The origin of the scapula coincident with AA
      O_RSCA(:,:) = Markers.RAA(:,:);
@@ -184,20 +171,6 @@
      % because of the use of AA instead of AC, this
      % plane is not the same as the visual plane of the
      % scapula bone.
-     
-     % Create plane formed by AI, AA, and TS
-        inputMatrixAffine_fit(1,:) = Markers.RAI(1,:);
-        inputMatrixAffine_fit(2,:) = Markers.RAA(1,:);
-        inputMatrixAffine_fit(3,:) = Markers.RTS(1,:);
-     
-        [n_RSCA,V_RSCA,p_RSCA] = affine_fit(inputMatrixAffine_fit);
-     
-        [S1,S2] = meshgrid([-50 0 50]);
-     
-        %generate the point coordinates
-        X_RSCA = p_RSCA(1)+[S1(:) S2(:)]*V_RSCA(1,:)';
-        Y_RSCA = p_RSCA(2)+[S1(:) S2(:)]*V_RSCA(2,:)';
-        Z_RSCA = p_RSCA(3)+[S1(:) S2(:)]*V_RSCA(3,:)';
         
      % The x-axis line is perpendicular to the plane formed by
      % AI, AA, and TS, pointing forward.
@@ -219,26 +192,6 @@
 
 %% Left Scapula Coordinate System
 
-     Markers.LAC(:,1) = (Markers.CLAV(:,1)-100.6);
-     Markers.LAC(:,2) = (Markers.CLAV(:,2)+131.3);
-     Markers.LAC(:,3) = (Markers.CLAV(:,3)+78.8);
-
-     Markers.LAA(:,1) = (Markers.CLAV(:,1)-104.3);
-     Markers.LAA(:,2) = (Markers.CLAV(:,2)+157.9);
-     Markers.LAA(:,3) = (Markers.CLAV(:,3)+74.7);
-
-     Markers.LTS(:,1) = (Markers.CLAV(:,1)-164.9);
-     Markers.LTS(:,2) = (Markers.CLAV(:,2)+57.3);
-     Markers.LTS(:,3) = (Markers.CLAV(:,3)-2.7);
-
-     Markers.LAI(:,1) = (Markers.CLAV(:,1)-170.8);
-     Markers.LAI(:,2) = (Markers.CLAV(:,2)+102.9);
-     Markers.LAI(:,3) = (Markers.CLAV(:,3)-97.4);
-
-     Markers.LGH(:,1) = (Markers.CLAV(:,1)-75.3);
-     Markers.LGH(:,2) = (Markers.CLAV(:,2)+153.6);
-     Markers.LGH(:,3) = (Markers.CLAV(:,3)+45.1);
-
      % The origin of the scapula coincident with AA
      O_LSCA(:,:) = Markers.LAA(:,:);
 
@@ -251,17 +204,6 @@
      % plane is not the same as the visual plane of the
      % scapula bone.
      
-     % Create plane formed by AI, AA, and TS
-     inputMatrixAffine_fit(1,:) = Markers.LAI(1,:);
-     inputMatrixAffine_fit(2,:) = Markers.LAA(1,:);
-     inputMatrixAffine_fit(3,:) = Markers.LTS(1,:);
-     
-     [n_LSCA,V_LSCA,p_LSCA] = affine_fit(inputMatrixAffine_fit);
- 
-     %generate the pont coordinates
-     X_LSCA = p_LSCA(1)+[S1(:) S2(:)]*V_LSCA(1,:)';
-     Y_LSCA = p_LSCA(2)+[S1(:) S2(:)]*V_LSCA(2,:)';
-     Z_LSCA = p_LSCA(3)+[S1(:) S2(:)]*V_LSCA(3,:)';
      
      x_axis_tmp_LSCA(:,:) = cross((Markers.LAI(:,:)-Markers.LAA(:,:)), (Markers.LTS(:,:)-Markers.LAA(:,:)));
 
@@ -294,7 +236,7 @@
 
 
      %u3 = z-axis = ISB recommendations: The line connecting SC and AC, pointing to AC
-     z_axis_tmp_RCLAV(:,:) = (Markers.RACR(:,:) - O_RCLAV(:,:));
+     z_axis_tmp_RCLAV(:,:) = (Markers.RAC(:,:) - O_RCLAV(:,:));
 
      %u2 = x-axis = ISB recommendations: The line perpendicular to Zc and Yt, pointing
      %forward. Note that the Xc-axis is defined with respect to the vertical axis of the thorax (Ytaxis)
@@ -309,7 +251,7 @@
      fex_RCLAV = x_axis_RCLAV/norm(x_axis_RCLAV);
      fey_RCLAV = y_axis_RCLAV/norm(y_axis_RCLAV);
      fez_RCLAV = z_axis_RCLAV/norm(z_axis_RCLAV);
-
+     
 %% Left Clavicula Coordinate System
 
      % Calculation of the Sternoclavicular (SC) joint center from the Incisura
@@ -327,7 +269,7 @@
      end
 
      %u3 = z-axis = ISB recommendations: The line connecting SC and AC, pointing to AC
-     z_axis_tmp_LCLAV(:,:) = (Markers.LACR(:,:) - O_LCLAV(:,:));
+     z_axis_tmp_LCLAV(:,:) = (Markers.LAC(:,:) - O_LCLAV(:,:));
 
      %u2 = x-axis = ISB recommendations: The line perpendicular to Zc and Yt, pointing
      %forward. Note that the Xc-axis is defined with respect to the vertical axis of the thorax (Ytaxis)
@@ -344,51 +286,150 @@
      fey_LCLAV = y_axis_LCLAV/norm(y_axis_LCLAV);
      fez_LCLAV = z_axis_LCLAV/norm(z_axis_LCLAV);
 
-%% Right Shoulder Coordinate System
+%% Right Humerus Coordinate System
+
+if USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION == true
+     % O_RHUMERUS(:,1) = (Markers.CLAV(:,1)-8.11*10);
+     % O_RHUMERUS(:,2) = (Markers.CLAV(:,2)-16.37*10);
+     % O_RHUMERUS(:,3) = (Markers.CLAV(:,3)-1.79*10);
+     
+elseif USE_MESKERS_GH_JOINT_CENTER_ESTIMATION == true
+     % GHx
+     O_RHUMERUS(:,1) = (18.9743... 
+                         + ( 0.2434 * Markers.RPC(:,1))...
+                         + ( 0.2341 * Markers.RAI(:,1))...
+                         + ( 0.1590 * sqrt(...
+                                             (Markers.RAI(:,1) - Markers.RAA(:,1)).^2.0...
+                                             +(Markers.RAI(:,2) - Markers.RAA(:,2)).^2.0...
+                                             +(Markers.RAI(:,3) - Markers.RAA(:,3)).^2.0...
+                                          )...
+                           )...
+                         + ( 0.0558 * Markers.RPC(:,2))...
+                        );
+     % GHy                              
+     O_RHUMERUS(:,2) = (-3.8791... 
+                         + (-0.3940 * sqrt(...
+                                             (Markers.RAC(:,1) - Markers.RAA(:,1)).^2.0...
+                                             +(Markers.RAC(:,2) - Markers.RAA(:,2)).^2.0...
+                                             +(Markers.RAC(:,3) - Markers.RAA(:,3)).^2.0))...
+                         +( 0.1732 * Markers.RPC(:,2))...
+                         +( 0.1205 * Markers.RAI(:,1))...
+                         +(-0.1002 * sqrt(...
+                                             (Markers.RAC(:,1) - Markers.RPC(:,1)).^2.0...
+                                             +(Markers.RAC(:,2) - Markers.RPC(:,2)).^2.0...
+                                             +(Markers.RAC(:,3) - Markers.RPC(:,3)).^2.0...
+                                          )...
+                          )...
+                    );
+     % GHz          
+     O_RHUMERUS(:,3) = (9.2629...
+                         +( 1.0255 * Markers.RPC(:,3))...
+                         +(-0.2403 * Markers.RPC(:,2))...                         
+                         +( 0.1720 * sqrt(...
+                                             (Markers.RTS(:,1) - Markers.RPC(:,1)).^2.0...
+                                             + (Markers.RTS(:,2) - Markers.RPC(:,2)).^2.0...
+                                             + (Markers.RTS(:,3) - Markers.RPC(:,3)).^2.0...
+                                         )...
+                          )...
+                       );
+
+else
+     % mediolateral axis ISB x C3D y
+     % O_RHUMERUS(:,2) = Markers.RAC(:,2);
+     % O_RHUMERUS(:,3) = Markers.RSHO(:,3);
+     % O_RHUMERUS(:,1) = (Markers.RAC(:,1) + Markers.RSHO(:,1))/2;
+end
+
+O_RSCAPULAMESKERS(:,1) = Markers.RAC(:,1);
+O_RSCAPULAMESKERS(:,2) = Markers.RAC(:,2);
+O_RSCAPULAMESKERS(:,3) = Markers.RAC(:,3);
+
+x_axis_tmp_RSCAPULAMESKERS(:,:) = Markers.RAC(:,:) - Markers.RTS(:,:);
+z_axis_tmp_RSCAPULAMESKERS(:,:) = cross((Markers.RAC(:,:)-Markers.RTS(:,:)), (Markers.RTS(:,:)-Markers.RAI(:,:)));
+y_axis_tmp_RSCAPULAMESKERS(:,:) = cross(z_axis_tmp_RSCAPULAMESKERS(:,:), x_axis_tmp_RSCAPULAMESKERS);
+z_axis_RSCAPULAMESKERS(:,:) = cross(x_axis_tmp_RSCAPULAMESKERS(:,:),y_axis_tmp_RSCAPULAMESKERS(:,:));
+x_axis_RSCAPULAMESKERS(:,:) = cross(y_axis_tmp_RSCAPULAMESKERS(:,:),z_axis_RSCAPULAMESKERS(:,:));
+y_axis_RSCAPULAMESKERS(:,:) = cross(z_axis_RSCAPULAMESKERS(:,:), x_axis_RSCAPULAMESKERS);
+
+fex_RSCAPULAMESKERS = x_axis_RSCAPULAMESKERS/norm(x_axis_RSCAPULAMESKERS);
+fey_RSCAPULAMESKERS = y_axis_RSCAPULAMESKERS/norm(y_axis_RSCAPULAMESKERS);
+fez_RSCAPULAMESKERS = z_axis_RSCAPULAMESKERS/norm(z_axis_RSCAPULAMESKERS);
+
+
+y_axis_tmp_RHUMERUS(:,:) = (O_RHUMERUS(:,:) - y_axis_tmp_RFA(:,:));
+z_axis_tmp_RHUMERUS(:,:) = cross(y_axis_tmp_RHUMERUS(:,:),y_axis_RFA);
+x_axis_RHUMERUS(:,:) = cross(y_axis_tmp_RHUMERUS(:,:),z_axis_tmp_RHUMERUS(:,:));
+y_axis_RHUMERUS(:,:) = cross(z_axis_tmp_RHUMERUS(:,:),x_axis_RHUMERUS(:,:));
+z_axis_RHUMERUS(:,:) = cross(x_axis_RHUMERUS(:,:),y_axis_RHUMERUS(:,:));
+
+fex_RHUMERUS = x_axis_RHUMERUS/norm(x_axis_RHUMERUS);
+fey_RHUMERUS = y_axis_RHUMERUS/norm(y_axis_RHUMERUS);
+fez_RHUMERUS = z_axis_RHUMERUS/norm(z_axis_RHUMERUS);
+
+
+%% Left Humerus Coordinate System
 
      if USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION == true
-          O_RSHO(:,1) = (Markers.CLAV(:,1)-8.11*10);
-          O_RSHO(:,2) = (Markers.CLAV(:,2)-16.37*10);
-          O_RSHO(:,3) = (Markers.CLAV(:,3)-1.79*10);
+          O_RHUMERUS(:,1) = (Markers.CLAV(:,1)-8.11*10);
+          O_RHUMERUS(:,2) = (Markers.CLAV(:,2)-16.37*10);
+          O_RHUMERUS(:,3) = (Markers.CLAV(:,3)-1.79*10);
+          
+     elseif USE_MESKERS_GH_JOINT_CENTER_ESTIMATION == true
+          % GHx
+          O_LHUMERUS(:,1) = (18.9743... 
+                              + ( 0.2434 * Markers.LPC(:,1))...
+                              + ( 0.2341 * Markers.LAI(:,1))...
+                              + ( 0.1590 * sqrt(...
+                                                  (Markers.LAI(:,1) - Markers.LAA(:,1)).^2.0...
+                                                  +(Markers.LAI(:,2) - Markers.LAA(:,2)).^2.0...
+                                                  +(Markers.LAI(:,3) - Markers.LAA(:,3)).^2.0...
+                                             )...
+                              )...
+                              + ( 0.0558 * Markers.LPC(:,2))...
+                         );
+          % GHy                              
+          O_LHUMERUS(:,2) = (-3.8791... 
+                              + (-0.3940 * sqrt(...
+                                                  (Markers.LAC(:,1) - Markers.LAA(:,1)).^2.0...
+                                                  +(Markers.LAC(:,2) - Markers.LAA(:,2)).^2.0...
+                                                  +(Markers.LAC(:,3) - Markers.LAA(:,3)).^2.0))...
+                              + ( 0.1732 * Markers.LPC(:,2))...
+                              + ( 0.1205 * Markers.LAI(:,1))...
+                              + (-0.1002 * sqrt(...
+                                                  (Markers.LAC(:,1) - Markers.LPC(:,1)).^2.0...
+                                                  +(Markers.LAC(:,2) - Markers.LPC(:,2)).^2.0...
+                                                  +(Markers.LAC(:,3) - Markers.LPC(:,3)).^2.0...
+                                             )...
+                              )...
+                         );
+          % GHz          
+          O_LHUMERUS(:,3) = (9.2629...
+                              +( 1.0255 * Markers.LPC(:,3))...
+                              +(-0.2403 * Markers.LPC(:,2))...                         
+                              +(0.1720 * sqrt(...
+                                                  (Markers.LTS(:,1) - Markers.LPC(:,1)).^2.0...
+                                                  +(Markers.LTS(:,2) - Markers.LPC(:,2)).^2.0...
+                                                  +(Markers.LTS(:,3) - Markers.LPC(:,3)).^2.0...
+                                             )...
+                              )...
+                         );
+
      else
           % mediolateral axis ISB x C3D y
-          O_RSHO(:,2) = Markers.RACR(:,2);
-          O_RSHO(:,3) = Markers.RSHO(:,3);
-          O_RSHO(:,1) = (Markers.RACR(:,1) + Markers.RSHO(:,1))/2;
+          O_LHUMERUS(:,2) = Markers.LAC(:,2);
+          O_LHUMERUS(:,3) = Markers.LSHO(:,3);
+          O_LHUMERUS(:,1) = (Markers.LAC(:,1) + Markers.LSHO(:,1))/2;
      end
 
-     y_axis_tmp_RSHO(:,:) = (O_RSHO(:,:)- y_axis_tmp_RFA(:,:));
-     z_axis_tmp_RSHO(:,:) = cross(y_axis_tmp_RSHO(:,:),y_axis_RFA);
-     x_axis_RSHO(:,:) = cross(y_axis_tmp_RSHO(:,:),z_axis_tmp_RSHO(:,:));
-     y_axis_RSHO(:,:) = cross(z_axis_tmp_RSHO(:,:),x_axis_RSHO(:,:));
-     z_axis_RSHO(:,:) = cross(x_axis_RSHO(:,:),y_axis_RSHO(:,:));
+          y_axis_tmp_LHUMERUS(:,:) = (O_LHUMERUS(:,:)- y_axis_tmp_LFA(:,:));
+          z_axis_tmp_LHUMERUS(:,:) = cross(y_axis_tmp_LHUMERUS(:,:),y_axis_LFA);
+          x_axis_LHUMERUS(:,:) = cross(y_axis_tmp_LHUMERUS(:,:),z_axis_tmp_LHUMERUS(:,:));
+          y_axis_LHUMERUS(:,:) = cross(z_axis_tmp_LHUMERUS(:,:),x_axis_LHUMERUS(:,:));
+          z_axis_LHUMERUS(:,:) = cross(x_axis_LHUMERUS(:,:),y_axis_LHUMERUS(:,:));
 
-     fex_RSHO = x_axis_RSHO/norm(x_axis_RSHO);
-     fey_RSHO = y_axis_RSHO/norm(y_axis_RSHO);
-     fez_RSHO = z_axis_RSHO/norm(z_axis_RSHO);
-
-%% Left Shoulder Coordinate System
-
-     if USE_KLEIN_BRETELER_GH_JOINT_CENTER_ESTIMATION == true
-          O_LSHO(:,1) = (Markers.CLAV(:,1)-8.11*10);
-          O_LSHO(:,2) = (Markers.CLAV(:,2)+16.37*10);
-          O_LSHO(:,3) = (Markers.CLAV(:,3)-1.79*10);
-     else
-          % mediolateral axis ISB x C3D y
-          O_LSHO(:,2) = Markers.LACR(:,2);
-          O_LSHO(:,3) = Markers.LSHO(:,3);
-          O_LSHO(:,1) = (Markers.LACR(:,1) + Markers.LSHO(:,1))/2;
-     end
-
-     y_axis_tmp_LSHO(:,:) = (O_LSHO(:,:)- y_axis_tmp_LFA(:,:));
-     z_axis_tmp_LSHO(:,:) = cross(y_axis_tmp_LSHO(:,:),y_axis_LFA);
-     x_axis_LSHO(:,:) = cross(y_axis_tmp_LSHO(:,:),z_axis_tmp_LSHO(:,:));
-     y_axis_LSHO(:,:) = cross(z_axis_tmp_LSHO(:,:),x_axis_LSHO(:,:));
-     z_axis_LSHO(:,:) = cross(x_axis_LSHO(:,:),y_axis_LSHO(:,:));
-
-     fex_LSHO = x_axis_LSHO/norm(x_axis_LSHO);
-     fey_LSHO = y_axis_LSHO/norm(y_axis_LSHO);
-     fez_LSHO = z_axis_LSHO/norm(z_axis_LSHO);
+          fex_LHUMERUS = x_axis_LHUMERUS/norm(x_axis_LHUMERUS);
+          fey_LHUMERUS = y_axis_LHUMERUS/norm(y_axis_LHUMERUS);
+          fez_LHUMERUS = z_axis_LHUMERUS/norm(z_axis_LHUMERUS);
 
 %% Right Hand Coordinate System
 
@@ -507,31 +548,31 @@
      
      % Right shoulder LCS
 
-          plot3([O_RSHO(1,1),O_RSHO(1,1)+fex_RSHO(1,1)*1000],...
-               [O_RSHO(1,2),O_RSHO(1,2)+fex_RSHO(1,2)*1000],...
-               [O_RSHO(1,3),O_RSHO(1,3)+fex_RSHO(1,3)*1000],'r');
+          plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fex_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fex_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fex_RHUMERUS(1,3)*1000],'r');
 
-          plot3([O_RSHO(1,1),O_RSHO(1,1)+fey_RSHO(1,1)*1000],...
-               [O_RSHO(1,2),O_RSHO(1,2)+fey_RSHO(1,2)*1000],...
-               [O_RSHO(1,3),O_RSHO(1,3)+fey_RSHO(1,3)*1000],'b');
+          plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fey_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fey_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fey_RHUMERUS(1,3)*1000],'b');
           
-          plot3([O_RSHO(1,1),O_RSHO(1,1)+fez_RSHO(1,1)*1000],...
-               [O_RSHO(1,2),O_RSHO(1,2)+fez_RSHO(1,2)*1000],...
-               [O_RSHO(1,3),O_RSHO(1,3)+fez_RSHO(1,3)*1000],'g');
+          plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fez_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fez_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fez_RHUMERUS(1,3)*1000],'g');
      
      % Left shoulder LCS
 
-          plot3([O_LSHO(1,1),O_LSHO(1,1)+fex_LSHO(1,1)*1000],...
-               [O_LSHO(1,2),O_LSHO(1,2)+fex_LSHO(1,2)*1000],...
-               [O_LSHO(1,3),O_LSHO(1,3)+fex_LSHO(1,3)*1000],'r');
+          plot3([O_LHUMERUS(1,1),O_LHUMERUS(1,1)+fex_LHUMERUS(1,1)*1000],...
+               [O_LHUMERUS(1,2),O_LHUMERUS(1,2)+fex_LHUMERUS(1,2)*1000],...
+               [O_LHUMERUS(1,3),O_LHUMERUS(1,3)+fex_LHUMERUS(1,3)*1000],'r');
 
-          plot3([O_LSHO(1,1),O_LSHO(1,1)+fey_LSHO(1,1)*1000],...
-               [O_LSHO(1,2),O_LSHO(1,2)+fey_LSHO(1,2)*1000],...
-               [O_LSHO(1,3),O_LSHO(1,3)+fey_LSHO(1,3)*1000],'b');
+          plot3([O_LHUMERUS(1,1),O_LHUMERUS(1,1)+fey_LHUMERUS(1,1)*1000],...
+               [O_LHUMERUS(1,2),O_LHUMERUS(1,2)+fey_LHUMERUS(1,2)*1000],...
+               [O_LHUMERUS(1,3),O_LHUMERUS(1,3)+fey_LHUMERUS(1,3)*1000],'b');
           
-          plot3([O_LSHO(1,1),O_LSHO(1,1)+fez_LSHO(1,1)*1000],...
-               [O_LSHO(1,2),O_LSHO(1,2)+fez_LSHO(1,2)*1000],...
-               [O_LSHO(1,3),O_LSHO(1,3)+fez_LSHO(1,3)*1000],'g');
+          plot3([O_LHUMERUS(1,1),O_LHUMERUS(1,1)+fez_LHUMERUS(1,1)*1000],...
+               [O_LHUMERUS(1,2),O_LHUMERUS(1,2)+fez_LHUMERUS(1,2)*1000],...
+               [O_LHUMERUS(1,3),O_LHUMERUS(1,3)+fez_LHUMERUS(1,3)*1000],'g');
      
      % Right hand LCS
 
@@ -628,21 +669,22 @@
           plot3(Markers.C7(1,1),Markers.C7(1,2),Markers.C7(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.CLAV(1,1),Markers.CLAV(1,2),Markers.CLAV(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.STRN(1,1),Markers.STRN(1,2),Markers.STRN(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.TH6(1,1),Markers.TH6(1,2),Markers.TH6(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.TH10(1,1),Markers.TH10(1,2),Markers.TH10(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.T6(1,1),Markers.T6(1,2),Markers.T6(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.T8(1,1),Markers.T8(1,2),Markers.T8(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.T10(1,1),Markers.T10(1,2),Markers.T10(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RANK(1,1),Markers.RANK(1,2),Markers.RANK(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.RANKmed(1,1),Markers.RANKmed(1,2),Markers.RANKmed(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RANKM(1,1),Markers.RANKM(1,2),Markers.RANKM(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.LANK(1,1),Markers.LANK(1,2),Markers.LANK(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LANKmed(1,1),Markers.LANKmed(1,2),Markers.LANKmed(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LANKM(1,1),Markers.LANKM(1,2),Markers.LANKM(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RKNE(1,1),Markers.RKNE(1,2),Markers.RKNE(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.RKNEmed(1,1),Markers.RKNEmed(1,2),Markers.RKNEmed(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RKNEM(1,1),Markers.RKNEM(1,2),Markers.RKNEM(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.RTRO(1,1),Markers.RTRO(1,2),Markers.RTRO(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.LKNE(1,1),Markers.LKNE(1,2),Markers.LKNE(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LKNEmed(1,1),Markers.LKNEmed(1,2),Markers.LKNEmed(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LANKM(1,1),Markers.LANKM(1,2),Markers.LANKM(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.LTRO(1,1),Markers.LTRO(1,2),Markers.LTRO(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RFH(1,1),Markers.RFH(1,2),Markers.RFH(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
@@ -650,14 +692,14 @@
           plot3(Markers.RBH(1,1),Markers.RBH(1,2),Markers.RBH(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.LBH(1,1),Markers.LBH(1,2),Markers.LBH(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RACR(1,1),Markers.RACR(1,2),Markers.RACR(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LACR(1,1),Markers.LACR(1,2),Markers.LACR(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RAC(1,1),Markers.RAC(1,2),Markers.RAC(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LAC(1,1),Markers.LAC(1,2),Markers.LAC(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RFRA(1,1),Markers.RFRA(1,2),Markers.RFRA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LFRA(1,1),Markers.LFRA(1,2),Markers.LFRA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RFA(1,1),Markers.RFA(1,2),Markers.RFA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LFA(1,1),Markers.LFA(1,2),Markers.LFA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RUpperArm(1,1),Markers.RUpperArm(1,2),Markers.RUpperArm(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LUpperArm(1,1),Markers.LUpperArm(1,2),Markers.LUpperArm(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RUA(1,1),Markers.RUA(1,2),Markers.RUA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LUA(1,1),Markers.LUA(1,2),Markers.LUA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RELB(1,1),Markers.RELB(1,2),Markers.RELB(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.RELBmed(1,1),Markers.RELBmed(1,2),Markers.RELBmed(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
@@ -669,14 +711,14 @@
           plot3(Markers.LWRB(1,1),Markers.LWRB(1,2),Markers.LWRB(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.LWRA(1,1),Markers.LWRA(1,2),Markers.LWRA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RFRA(1,1),Markers.RFRA(1,2),Markers.RFRA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LFRA(1,1),Markers.LFRA(1,2),Markers.LFRA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RFA(1,1),Markers.RFA(1,2),Markers.RFA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LFA(1,1),Markers.LFA(1,2),Markers.LFA(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RSHO(1,1),Markers.RSHO(1,2),Markers.RSHO(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.LSHO(1,1),Markers.LSHO(1,2),Markers.LSHO(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RACR(1,1),Markers.RACR(1,2),Markers.RACR(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
-          plot3(Markers.LACR(1,1),Markers.LACR(1,2),Markers.LACR(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.RAC(1,1),Markers.RAC(1,2),Markers.RAC(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LAC(1,1),Markers.LAC(1,2),Markers.LAC(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
           plot3(Markers.RFIN(1,1),Markers.RFIN(1,2),Markers.RFIN(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
           plot3(Markers.LFIN(1,1),Markers.LFIN(1,2),Markers.LFIN(1,3),'o', 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
@@ -685,40 +727,159 @@
           %plot3([O_T(1,1),Markers.C7(1,1)],[O_T(1,2),Markers.C7(1,2)],[O_T(1,3),Markers.C7(1,3)],'--k');
           %plot3([O_T(1,1),Markers.TH8STRNMidcalc(1,1)],[O_T(1,2),Markers.TH8STRNMidcalc(1,2)],[O_T(1,3),Markers.TH8STRNMidcalc(1,3)],'--k');
           %plot3([Markers.C7(1,1),Markers.TH8STRNMidcalc(1,1)],[Markers.C7(1,2),Markers.TH8STRNMidcalc(1,2)],[Markers.C7(1,3),Markers.TH8STRNMidcalc(1,3)],'--k');
+            
+          plot3(Markers.RAC(1,1),Markers.RAC(1,2),Markers.RAC(1,3),'o', 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LAC(1,1),Markers.LAC(1,2),Markers.LAC(1,3),'o', 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-     % Calculated joint centers (+), markers (o) and midpoints (*)
+          plot3(Markers.RAA(1,1),Markers.RAA(1,2),Markers.RAA(1,3),'o', 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LAA(1,1),Markers.LAA(1,2),Markers.LAA(1,3),'o', 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(O_LSHO(1,1),O_LSHO(1,2),O_LSHO(1,3),'+k');
-          plot3(O_RSHO(1,1),O_RSHO(1,2),O_RSHO(1,3),'+k');
+          plot3(Markers.RTS(1,1),Markers.RTS(1,2),Markers.RTS(1,3),'o', 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LTS(1,1),Markers.LTS(1,2),Markers.LTS(1,3),'o', 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
 
-          plot3(Markers.RGH(1,1),Markers.RGH(1,2),Markers.RGH(1,3),'+k');
-          plot3(Markers.LGH(1,1),Markers.LGH(1,2),Markers.LGH(1,3),'+k');
+          plot3(Markers.RAI(1,1),Markers.RAI(1,2),Markers.RAI(1,3),'o', 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LAI(1,1),Markers.LAI(1,2),Markers.LAI(1,3),'o', 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          
+          plot3(Markers.RPC(1,1),Markers.RPC(1,2),Markers.RPC(1,3),'o', 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          plot3(Markers.LPC(1,1),Markers.LPC(1,2),Markers.LPC(1,3),'o', 'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'black', 'MarkerSize', 3);
+          
+          plot3([Markers.RAC(1,1), Markers.RTS(1,1)],[Markers.RAC(1,2), Markers.RTS(1,2)],[Markers.RAC(1,3), Markers.RTS(1,3)], '-k')
+          plot3([Markers.LAC(1,1), Markers.LTS(1,1)],[Markers.LAC(1,2), Markers.LTS(1,2)],[Markers.LAC(1,3), Markers.LTS(1,3)], '-k')
+          plot3([Markers.RAI(1,1), Markers.RTS(1,1)],[Markers.RAI(1,2), Markers.RTS(1,2)],[Markers.RAI(1,3), Markers.RTS(1,3)], '-k')
+          plot3([Markers.LAI(1,1), Markers.LTS(1,1)],[Markers.LAI(1,2), Markers.LTS(1,2)],[Markers.LAI(1,3), Markers.LTS(1,3)], '-k')
+          plot3([Markers.RAI(1,1), Markers.RAA(1,1)],[Markers.RAI(1,2), Markers.RAA(1,2)],[Markers.RAI(1,3), Markers.RAA(1,3)], '-k')
+          plot3([Markers.LAI(1,1), Markers.LAA(1,1)],[Markers.LAI(1,2), Markers.LAA(1,2)],[Markers.LAI(1,3), Markers.LAA(1,3)], '-k')
+          plot3([Markers.RAA(1,1), Markers.RTS(1,1)],[Markers.RAA(1,2), Markers.RTS(1,2)],[Markers.RAA(1,3), Markers.RTS(1,3)], '-k')
+          plot3([Markers.LAA(1,1), Markers.LTS(1,1)],[Markers.LAA(1,2), Markers.LTS(1,2)],[Markers.LAA(1,3), Markers.LTS(1,3)], '-k')
+          plot3([Markers.RAA(1,1), Markers.RAC(1,1)],[Markers.RAA(1,2), Markers.RAC(1,2)],[Markers.RAA(1,3), Markers.RAC(1,3)], '-k')
+          plot3([Markers.LAA(1,1), Markers.LAC(1,1)],[Markers.LAA(1,2), Markers.LAC(1,2)],[Markers.LAA(1,3), Markers.LAC(1,3)], '-k')
+          plot3([Markers.RAC(1,1), Markers.RPC(1,1)],[Markers.RAC(1,2), Markers.RPC(1,2)],[Markers.RAC(1,3), Markers.RPC(1,3)], '-k')
+          plot3([Markers.LAC(1,1), Markers.LPC(1,1)],[Markers.LAC(1,2), Markers.LPC(1,2)],[Markers.LAC(1,3), Markers.LPC(1,3)], '-k') 
+          plot3([Markers.RAA(1,1), Markers.RPC(1,1)],[Markers.RAA(1,2), Markers.RPC(1,2)],[Markers.RAA(1,3), Markers.RPC(1,3)], '-k')
+          plot3([Markers.LAA(1,1), Markers.LPC(1,1)],[Markers.LAA(1,2), Markers.LPC(1,2)],[Markers.LAA(1,3), Markers.LPC(1,3)], '-k')     
+          % Calculated joint centers (+), markers (o) and midpoints (*)
+
+          plot3(O_LHUMERUS(1,1),O_LHUMERUS(1,2),O_LHUMERUS(1,3),'+g');
+          plot3(O_RHUMERUS(1,1),O_RHUMERUS(1,2),O_RHUMERUS(1,3),'+r');
+
+          %plot3(Markers.RGH(1,1),Markers.RGH(1,2),Markers.RGH(1,3),'+k');
+          %plot3(Markers.LGH(1,1),Markers.LGH(1,2),Markers.LGH(1,3),'+k');
 
           plot3(O_RCLAV(1,1),O_RCLAV(1,2),O_RCLAV(1,3),'+k');
           plot3(O_LCLAV(1,1),O_LCLAV(1,2),O_LCLAV(1,3),'+k');
 
-          plot3(Markers.RAC(1,1),Markers.RAC(1,2),Markers.RAC(1,3),'ok', 'MarkerSize', 3);
-          plot3(Markers.LAC(1,1),Markers.LAC(1,2),Markers.LAC(1,3),'ok', 'MarkerSize', 3);
-
-          plot3(Markers.RAA(1,1),Markers.RAA(1,2),Markers.RAA(1,3),'ok', 'MarkerSize', 3);
-          plot3(Markers.LAA(1,1),Markers.LAA(1,2),Markers.LAA(1,3),'ok', 'MarkerSize', 3);
-
-          plot3(Markers.RTS(1,1),Markers.RTS(1,2),Markers.RTS(1,3),'ok', 'MarkerSize', 3);
-          plot3(Markers.LTS(1,1),Markers.LTS(1,2),Markers.LTS(1,3),'ok', 'MarkerSize', 3);
-
-          plot3(Markers.RAI(1,1),Markers.RAI(1,2),Markers.RAI(1,3),'ok', 'MarkerSize', 3);
-          plot3(Markers.LAI(1,1),Markers.LAI(1,2),Markers.LAI(1,3),'ok', 'MarkerSize', 3);
+         
 
           plot3(Markers.TH8STRNMidcalc(1,1),Markers.TH8STRNMidcalc(1,2),Markers.TH8STRNMidcalc(1,3),'pk', 'MarkerSize', 3);
           plot3(Markers.C7CLAVMidcalc(1,1),Markers.C7CLAVMidcalc(1,2),Markers.C7CLAVMidcalc(1,3),'pk', 'MarkerSize', 3);
 
-          plot3(Markers.TH8calc(1,1),Markers.TH8calc(1,2),Markers.TH8calc(1,3),'ok', 'MarkerSize', 3);
-            
-          %plot the plane
-          surf(reshape(X_RSCA,3,3),reshape(Y_RSCA,3,3),reshape(Z_RSCA,3,3),'facecolor','red','facealpha',0.5);
-          surf(reshape(X_LSCA,3,3),reshape(Y_LSCA,3,3),reshape(Z_LSCA,3,3),'facecolor','blue','facealpha',0.5);
      % Layout
           axis equal
           grid on
           legend('x','y','z');
+          hold off
+          
+%% Debug
+     if DEBUGMODE == true
+         figure
+         plot(O_RHUMERUS(:,1),'--')
+         hold on
+         plot(Markers.RPC(:,1))
+         plot(Markers.RAI(:,1))
+         plot(Markers.RAC(:,1))
+         plot(Markers.RAA(:,1))
+         plot(Markers.RTS(:,1))
+         title('x coordinates')
+         axis equal
+         grid on
+         legend('GH-r','RPC','RAI', 'RAC', 'RAA', 'RTS')
+         hold off
+
+
+         figure
+
+         plot(O_RHUMERUS(:,2),'--')
+         hold on
+         plot(Markers.RPC(:,2))
+         plot(Markers.RAI(:,2))
+         plot(Markers.RAC(:,2))
+         plot(Markers.RAA(:,2))
+         plot(Markers.RTS(:,2))
+         title('y coordinates')
+         axis equal
+         grid on
+         legend('GH-r','RPC','RAI', 'RAC', 'RAA', 'RTS')
+         hold off
+
+         figure
+         plot(O_RHUMERUS(:,3),'--')
+         hold on
+         plot(Markers.RPC(:,3))
+         plot(Markers.RAI(:,3))
+         plot(Markers.RAC(:,3))
+         plot(Markers.RAA(:,3))
+         plot(Markers.RTS(:,3))
+         title('z coordinates')
+         axis equal
+         grid on
+         legend('GH-r','RPC','RAI', 'RAC', 'RAA', 'RTS')
+         hold off
+         
+         figure
+          plot3([0,1*200],...
+               [0,0],...
+               [0,0],'r');
+
+          hold on
+
+          plot3([0,0],...
+               [0,1*200],...
+               [0,0],'b');
+          
+          plot3([0,0],...
+               [0,0],...
+               [0,1*200],'g');
+         plot3(O_RHUMERUS(1,1),O_RHUMERUS(1,2),O_RHUMERUS(1,3),'+k')
+         
+         plot3(Markers.RPC(1,1),Markers.RPC(1,2),Markers.RPC(1,3),'o')
+         plot3(Markers.RAI(1,1),Markers.RAI(1,2),Markers.RAI(1,3),'o')
+         plot3(Markers.RAC(1,1),Markers.RAC(1,2),Markers.RAC(1,3),'o')
+         plot3(Markers.RAA(1,1),Markers.RAA(1,2),Markers.RAA(1,3),'o')
+         plot3(Markers.RTS(1,1),Markers.RTS(1,2),Markers.RTS(1,3),'o')
+         
+         plot3([Markers.RAC(1,1), Markers.RTS(1,1)],[Markers.RAC(1,2), Markers.RTS(1,2)],[Markers.RAC(1,3), Markers.RTS(1,3)], '-k')
+         plot3([Markers.RAI(1,1), Markers.RTS(1,1)],[Markers.RAI(1,2), Markers.RTS(1,2)],[Markers.RAI(1,3), Markers.RTS(1,3)], '-k')
+         plot3([Markers.RAI(1,1), Markers.RAA(1,1)],[Markers.RAI(1,2), Markers.RAA(1,2)],[Markers.RAI(1,3), Markers.RAA(1,3)], '-k')
+         plot3([Markers.RAA(1,1), Markers.RTS(1,1)],[Markers.RAA(1,2), Markers.RTS(1,2)],[Markers.RAA(1,3), Markers.RTS(1,3)], '-k')
+         plot3([Markers.RAA(1,1), Markers.RAC(1,1)],[Markers.RAA(1,2), Markers.RAC(1,2)],[Markers.RAA(1,3), Markers.RAC(1,3)], '-k')
+         plot3([Markers.RAC(1,1), Markers.RPC(1,1)],[Markers.RAC(1,2), Markers.RPC(1,2)],[Markers.RAC(1,3), Markers.RPC(1,3)], '-k')
+         plot3([Markers.RAA(1,1), Markers.RPC(1,1)],[Markers.RAA(1,2), Markers.RPC(1,2)],[Markers.RAA(1,3), Markers.RPC(1,3)], '-k')
+                   plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fex_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fex_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fex_RHUMERUS(1,3)*1000],'r');
+
+          plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fey_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fey_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fey_RHUMERUS(1,3)*1000],'b');
+          
+          plot3([O_RHUMERUS(1,1),O_RHUMERUS(1,1)+fez_RHUMERUS(1,1)*1000],...
+               [O_RHUMERUS(1,2),O_RHUMERUS(1,2)+fez_RHUMERUS(1,2)*1000],...
+               [O_RHUMERUS(1,3),O_RHUMERUS(1,3)+fez_RHUMERUS(1,3)*1000],'g');
+
+               plot3([O_RSCAPULAMESKERS(1,1),O_RSCAPULAMESKERS(1,1)+fex_RSCAPULAMESKERS(1,1)*1000],...
+               [O_RSCAPULAMESKERS(1,2),O_RSCAPULAMESKERS(1,2)+fex_RSCAPULAMESKERS(1,2)*1000],...
+               [O_RSCAPULAMESKERS(1,3),O_RSCAPULAMESKERS(1,3)+fex_RSCAPULAMESKERS(1,3)*1000],'r');
+
+          plot3([O_RSCAPULAMESKERS(1,1),O_RSCAPULAMESKERS(1,1)+fey_RSCAPULAMESKERS(1,1)*1000],...
+               [O_RSCAPULAMESKERS(1,2),O_RSCAPULAMESKERS(1,2)+fey_RSCAPULAMESKERS(1,2)*1000],...
+               [O_RSCAPULAMESKERS(1,3),O_RSCAPULAMESKERS(1,3)+fey_RSCAPULAMESKERS(1,3)*1000],'b');
+
+          plot3([O_RSCAPULAMESKERS(1,1),O_RSCAPULAMESKERS(1,1)+fez_RSCAPULAMESKERS(1,1)*1000],...
+               [O_RSCAPULAMESKERS(1,2),O_RSCAPULAMESKERS(1,2)+fez_RSCAPULAMESKERS(1,2)*1000],...
+               [O_RSCAPULAMESKERS(1,3),O_RSCAPULAMESKERS(1,3)+fez_RSCAPULAMESKERS(1,3)*1000],'g');
+         axis equal         
+         grid on
+         legend('x','y','z','GH-r','RPC','RAI', 'RAC', 'RAA', 'RTS')
+         hold off
+     end
 
